@@ -7,20 +7,18 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="TransactionDataSources\**" />
     <Compile Remove="_FakeDataSources\**" />
     <Compile Remove="__TEMPORARY\**" />
+    <Content Remove="TransactionDataSources\**" />
     <Content Remove="_FakeDataSources\**" />
     <Content Remove="__TEMPORARY\**" />
+    <EmbeddedResource Remove="TransactionDataSources\**" />
     <EmbeddedResource Remove="_FakeDataSources\**" />
     <EmbeddedResource Remove="__TEMPORARY\**" />
+    <None Remove="TransactionDataSources\**" />
     <None Remove="_FakeDataSources\**" />
     <None Remove="__TEMPORARY\**" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Include="TransactionDataSources\csv\customer_transactions.csv">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
   </ItemGroup>
 
   <ItemGroup>
@@ -46,9 +44,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Update="TransactionDataSources\json\customer_transactions.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
+	<Content Include="..\TransactionDataSources\csv\customer_transactions.csv" Link="customer_transactions.csv" CopyToOutputDirectory="Always" />
   </ItemGroup>
 
 </Project>

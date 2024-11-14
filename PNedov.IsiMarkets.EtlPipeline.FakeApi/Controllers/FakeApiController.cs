@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.FileProviders;
 using Newtonsoft.Json.Linq;
 using PNedov.IsiMarkets.EtlPipeline.FakeApi.Models;
 
@@ -34,7 +35,7 @@ public class FakeApiController : ControllerBase
 
         var newRawDataRecords = new List<RawDataRecord>();
         var jsonFileName = _configuration["FilePathToCustomerTransactionsJson"] ?? string.Empty;
-       
+
         var filePath = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, jsonFileName));
         using (var reader = new StreamReader(filePath))
         {

@@ -27,10 +27,7 @@ public class CsvExtractor : IExtractor
         var hasHeaderRecordConfig = _configuration["CsvConfiguration:HasHeaderRecord"];
         var hasHeaderRecord = !string.IsNullOrEmpty(hasHeaderRecordConfig) && bool.Parse(hasHeaderRecordConfig);
         var delimiter = _configuration["CsvConfiguration:Delimiter"] ?? string.Empty;
-        var subFolder = _configuration["CsvConfiguration:SubDirectory"] ?? string.Empty;
-        var mainFolder = _configuration["CsvConfiguration:DirectoryDataSource"] ?? string.Empty;
         var csvFile = _configuration["CsvConfiguration:FileName"] ?? string.Empty;
-
 
         var config = new CsvConfiguration(CultureInfo.InvariantCulture)
         {
@@ -38,7 +35,8 @@ public class CsvExtractor : IExtractor
             Delimiter = delimiter ?? ","
         };
 
-        var filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, mainFolder, subFolder, csvFile);
+        var filePath = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, csvFile));
+
         if (File.Exists(filePath))
         {
             filePath = Path.GetFullPath(filePath);

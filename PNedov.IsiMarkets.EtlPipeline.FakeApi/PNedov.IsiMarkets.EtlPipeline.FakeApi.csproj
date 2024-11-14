@@ -15,10 +15,8 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Content Update="customer_transactions.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
+	<ItemGroup>
+		<Content Include="..\TransactionDataSources\json\customer_transactions.json" Link="customer_transactions.json" CopyToOutputDirectory="Always" />
+	</ItemGroup>
 
 </Project>

@@ -205,7 +205,6 @@ namespace PNedov.IsiMarkets.EtlPipeline.Migrations
                     @unique_id uniqueidentifier,
                     @fname nvarchar(32),
 	                @lname nvarchar(32),
-                    @cust_email nvarchar(64),
                     @updated_id int OUTPUT
                 AS
                 BEGIN
@@ -213,7 +212,6 @@ namespace PNedov.IsiMarkets.EtlPipeline.Migrations
                    SET 
                        fname = @fname
                       ,lname = @lname
-	                  ,cust_email = @cust_email
                    WHERE unique_id = @unique_id
                 END;
                 SET @updated_id = (SELECT id FROM customers WHERE unique_id = @unique_id);
