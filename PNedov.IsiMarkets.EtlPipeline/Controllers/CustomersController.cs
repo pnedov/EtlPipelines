@@ -40,8 +40,8 @@ public class CustomersController : ControllerBase
     /// <param name="skip">The number of transactions to skip.</param>
     /// <param name="take">The number of transactions to take.</param>
     /// <param name="token">The cancellation token to cancel the operation.</param>
-    /// <returns>A list of customer transactions.</returns>
-    [HttpGet("{customerId}/transactions")]
+    /// <returns></returns>
+    [HttpGet("{customerId}/transactions")]
     public async Task<IActionResult> GetCustomerTransactions(Guid customerId, int skip, int take, CancellationToken token)
     {
 

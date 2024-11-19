@@ -18,7 +18,7 @@ public class AmountFilterTransformer : ITransformer
     /// Ensure the record has the required fields
     /// </summary>
     /// <param name="record"></param>
-    /// <exception cref="InvalidOperationException"></exception>
+    /// <return>Processed raw data records</return>
     public IEnumerable<RawDataRecord> ApplyBusinessRule(IEnumerable<RawDataRecord> records)
     {
         foreach (var record in records)
@@ -100,7 +100,7 @@ public class AmountFilterTransformer : ITransformer
 
             if (!isValid)
             {
-                _logger.LogWarning("Invalid record found: {@Record}", record);
+                _logger.LogWarning("AmountFilterTransformer.Validate - Invalid record found: {@Record}", record);
             }
         }
 

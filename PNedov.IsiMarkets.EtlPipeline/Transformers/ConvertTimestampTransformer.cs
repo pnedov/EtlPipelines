@@ -28,7 +28,7 @@ public class ConvertTimestampTransformer : ITransformer
             }
             else
             {
-                _logger.LogError($"Invalid timestamp format: {record.CustomerTransactionTimestamp}");
+                _logger.LogError($"ConvertTimestampTransformer.ApplyBusinessRule - Invalid timestamp format: {record.CustomerTransactionTimestamp}");
             }
         }
 
@@ -49,7 +49,7 @@ public class ConvertTimestampTransformer : ITransformer
             }
             else
             {
-                _logger.LogError($"Invalid timestamp format: {record.CustomerTransactionTimestamp}");
+                _logger.LogError($"ConvertTimestampTransformer.Format timestamp format: {record.CustomerTransactionTimestamp}");
             }
         }
 
@@ -66,7 +66,7 @@ public class ConvertTimestampTransformer : ITransformer
         {
             if (!DateTime.TryParse(record.CustomerTransactionTimestamp, out _))
             {
-                _logger.LogError($"Invalid timestamp format: {record.CustomerTransactionTimestamp}");
+                _logger.LogError($"ConvertTimestampTransformer.Validate - Invalid timestamp format: {record.CustomerTransactionTimestamp}");
             }
         }
 

@@ -25,7 +25,7 @@ public class ApiExtractor : IExtractor
     /// Asynchronously extracts data from the API endpoint.
     /// </summary>
     /// <param name="cancellationToken">Token to monitor for cancellation requests.</param>
-    /// <returns>Returns a collection of <see cref="RawDataRecord"/> or an empty list if the response is null.</returns>
+    /// <returns></returns>
     public async Task<IEnumerable<RawDataRecord>> ExtractDataAsync(CancellationToken cancellationToken)
     {
         var baseUrl = _configuration["ApiFakeBaseUrl"];

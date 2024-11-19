@@ -70,8 +70,7 @@ public class RemoveDuplicatesTransformer : ITransformer
     /// Validates the records for null or empty fields
     /// </summary>
     /// <param name="records">Collection of raw data records.</param>
-    /// <exception cref="ArgumentException">Thrown when an argument is invalid.</exception>
-    /// <exception cref="InvalidOperationException">Thrown when an invalid operation occurs.</exception>
+    /// <returns></returns>
     public IEnumerable<RawDataRecord> Validate(IEnumerable<RawDataRecord> records)
     {
         if (records == null || !records.Any())
@@ -89,7 +88,7 @@ public class RemoveDuplicatesTransformer : ITransformer
                 string.IsNullOrWhiteSpace(record.CustomerId) ||
                 string.IsNullOrWhiteSpace(record.ProductId))
             {
-                _logger.LogError($"One or more fields in the record are null or empty. Removing record with ID: {record.CustomerTransactionId} - {record.CustomerId} - {record.ProductId}");
+                _logger.LogError($"RemoveDuplicatesTransformer.Validate - One or more fields in the record are null or empty. Removing record with ID: {record.CustomerTransactionId} - {record.CustomerId} - {record.ProductId}");
             }
             else
             {
