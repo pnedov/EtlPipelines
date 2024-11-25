@@ -22,10 +22,11 @@ public class SqliteExtractor : IExtractor
     {
         var records = new List<RawDataRecord>();
 
-        var _connectionString = _configuration["ConnectionStrings:TransactionsSQLiteDB"] ?? string.Empty;
-        var dbPath = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, _connectionString));
+        var configPath = _configuration["ConnectionStrings:TransactionsSQLiteDB"] ?? string.Empty;
+        var fullDbPath
+            = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, configPath));
 
-        using (var connection = new SqliteConnection($"Data Source={dbPath}"))
+        using (var connection = new SqliteConnection($"Data Source={fullDbPath}"))
         {
             await connection.OpenAsync(token);
 

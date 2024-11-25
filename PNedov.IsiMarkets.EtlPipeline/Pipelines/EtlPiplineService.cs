@@ -1,4 +1,5 @@
-﻿using PNedov.IsiMarkets.EtlPipeline.APIExtractors;
+﻿using System.Collections.Concurrent;
+using PNedov.IsiMarkets.EtlPipeline.APIExtractors;
 using PNedov.IsiMarkets.EtlPipeline.Repositories;
 using PNedov.IsiMarkets.EtlPipeline.Transormers;
 
@@ -18,6 +19,7 @@ public class EtlPiplineService : IHostedService
     private readonly IProductsRepository _productсRepository;
     private readonly ICustomersRepository _customersRepository;
     private readonly ILogger<ITransformer> _logger;
+    private readonly ConcurrentDictionary<string, Task> _runningTasks;
 
     public EtlPiplineService(
         IServiceProvider serviceProvider,
@@ -33,6 +35,7 @@ public class EtlPiplineService : IHostedService
         _timer = new Timer(TimerCallback, null, Timeout.Infinite, Timeout.Infinite);
         _sysMinutesInterval = _configuration.GetValue<int>("SysTimeIntervalMinutes");
         _logger = logger;
+        _runningTasks = new ConcurrentDictionary<string, Task>();
 
         var _extractors = new List<IExtractor>() {
             new ApiExtractor(configuration),
@@ -68,12 +71,31 @@ public class EtlPiplineService : IHostedService
         return Task.CompletedTask;
     }
 
+
     private async void TimerCallback(object? state)
     {
+        var tasks = new List<Task>();
+
         foreach (var pipeline in _pipelines)
         {
-            await pipeline.RunAsync(CancellationToken.None);
+            var pipelineId = pipeline.Id; // Assuming each pipeline has a unique Id property
+
+            if (_runningTasks.TryGetValue(pipelineId, out var runningTask) && !runningTask.IsCompleted)
+            {
+                _logger.LogInformation($"Pipeline {pipelineId} is still running.");
+                continue;
+            }
+
+            var task = Task.Run(async () =>
+            {
+                await pipeline.RunAsync(CancellationToken.None);
+            });
+
+            _runningTasks[pipelineId] = task;
+            tasks.Add(task);
         }
+
+        await Task.WhenAll(tasks);
     }
 }
 

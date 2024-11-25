@@ -10,6 +10,7 @@ namespace PNedov.IsiMarkets.EtlPipeline.ETLPipelines;
 /// </summary>
 public class EltPipeline
 {
+    public string Id { get; }
     private IEnumerable<IExtractor> _extractors { get; set; }
     private IEnumerable<ITransformer> _transformers { get; set; }
     private readonly IProductsRepository _productsRepository;
@@ -21,6 +22,7 @@ public class EltPipeline
         IProductsRepository productsRepository,
         ICustomersRepository customersRepository)
     {
+        Id = Guid.NewGuid().ToString();
         _extractors = extractors;
         _transformers = transformers;
         _productsRepository = productsRepository;
