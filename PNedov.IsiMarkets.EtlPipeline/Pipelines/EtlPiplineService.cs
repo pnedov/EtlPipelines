@@ -36,7 +36,8 @@ public class EtlPiplineService : IHostedService
 
         var _extractors = new List<IExtractor>() {
             new ApiExtractor(configuration),
-            new CsvExtractor(configuration) };
+            new CsvExtractor(configuration),
+            new SqliteExtractor(configuration)};
 
         var _transformers = new List<ITransformer>() {
             new AmountFilterTransformer(_logger),
