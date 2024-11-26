@@ -40,14 +40,16 @@ public class EtlPiplineService : IHostedService
         var _extractors = new List<IExtractor>() {
             new ApiExtractor(configuration),
             new CsvExtractor(configuration),
-            new SqliteExtractor(configuration)};
+            new SqliteExtractor(configuration)
+        };
 
         var _transformers = new List<ITransformer>() {
             new AmountFilterTransformer(_logger),
             new ConvertTimestampTransformer(_logger),
-            new RemoveDuplicatesTransformer(_logger) };
+            new RemoveDuplicatesTransformer(_logger) 
+        };
 
-        _pipelines = [new EltPipeline(_extractors, _transformers, _productсRepository, _customersRepository)];
+        _pipelines = [new EltPipeline(_extractors, _transformers, _productсRepository, _customersRepository), new EltPipeline(_extractors, _transformers, _productсRepository, _customersRepository)];
     }
 
     /// <summary>
@@ -71,31 +73,21 @@ public class EtlPiplineService : IHostedService
         return Task.CompletedTask;
     }
 
-
     private async void TimerCallback(object? state)
     {
-        var tasks = new List<Task>();
-
         foreach (var pipeline in _pipelines)
         {
-            var pipelineId = pipeline.Id; // Assuming each pipeline has a unique Id property
-
-            if (_runningTasks.TryGetValue(pipelineId, out var runningTask) && !runningTask.IsCompleted)
+            if (_runningTasks.TryGetValue(pipeline.Id, out var runningTask) && !runningTask.IsCompleted)
             {
-                _logger.LogInformation($"Pipeline {pipelineId} is still running.");
+                _logger.LogInformation($"Pipeline {pipeline.Id} is still running.");
                 continue;
             }
 
-            var task = Task.Run(async () =>
-            {
-                await pipeline.RunAsync(CancellationToken.None);
-            });
-
-            _runningTasks[pipelineId] = task;
-            tasks.Add(task);
+            _runningTasks[pipeline.Id] = Task.Run(async () =>
+                                         {
+                                             await pipeline.RunAsync(CancellationToken.None);
+                                         });
         }
-
-        await Task.WhenAll(tasks);
     }
 }
 
