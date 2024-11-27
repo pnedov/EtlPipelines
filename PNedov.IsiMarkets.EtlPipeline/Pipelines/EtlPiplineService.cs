@@ -14,11 +14,12 @@ public class EtlPiplineService : IHostedService
 
     private readonly Timer _timer;
     private readonly IEnumerable<EltPipeline> _pipelines;
-    private readonly int _sysMinutesInterval;
+    private readonly int _sysIntervalSeconds;
     private readonly IConfiguration _configuration;
     private readonly IProductsRepository _productсRepository;
     private readonly ICustomersRepository _customersRepository;
     private readonly ILogger<ITransformer> _logger;
+    private readonly ILogger<EltPipeline> _loggerEltPipeline;
     private readonly ConcurrentDictionary<string, Task> _runningTasks;
 
     public EtlPiplineService(
@@ -26,15 +27,17 @@ public class EtlPiplineService : IHostedService
         IConfiguration configuration,
         IProductsRepository productRepository,
         ICustomersRepository customersRepository,
-        ILogger<ITransformer> logger)
+        ILogger<ITransformer> logger,
+        ILogger<EltPipeline> loggerEltPipeline)
     {
         _serviceProvider = serviceProvider;
         _productсRepository = productRepository;
         _customersRepository = customersRepository;
         _configuration = configuration;
         _timer = new Timer(TimerCallback, null, Timeout.Infinite, Timeout.Infinite);
-        _sysMinutesInterval = _configuration.GetValue<int>("SysTimeIntervalMinutes");
+        _sysIntervalSeconds = _configuration.GetValue<int>("SysTimeIntervalSeconds");
         _logger = logger;
+        _loggerEltPipeline = loggerEltPipeline;
         _runningTasks = new ConcurrentDictionary<string, Task>();
 
         var _extractors = new List<IExtractor>() {
@@ -49,7 +52,7 @@ public class EtlPiplineService : IHostedService
             new RemoveDuplicatesTransformer(_logger) 
         };
 
-        _pipelines = [new EltPipeline(_extractors, _transformers, _productсRepository, _customersRepository), new EltPipeline(_extractors, _transformers, _productсRepository, _customersRepository)];
+        _pipelines = [new EltPipeline(_extractors, _transformers, _productсRepository, _customersRepository, loggerEltPipeline)];
     }
 
     /// <summary>
@@ -59,7 +62,7 @@ public class EtlPiplineService : IHostedService
     /// <returns></returns>
     public Task StartAsync(CancellationToken cancellationToken)
     {
-        _timer.Change(TimeSpan.Zero, TimeSpan.FromMinutes(_sysMinutesInterval));
+        _timer.Change(TimeSpan.Zero, TimeSpan.FromSeconds(_sysIntervalSeconds));
         return Task.CompletedTask;
     }
 
@@ -79,14 +82,10 @@ public class EtlPiplineService : IHostedService
         {
             if (_runningTasks.TryGetValue(pipeline.Id, out var runningTask) && !runningTask.IsCompleted)
             {
-                _logger.LogInformation($"Pipeline {pipeline.Id} is still running.");
                 continue;
             }
-
-            _runningTasks[pipeline.Id] = Task.Run(async () =>
-                                         {
-                                             await pipeline.RunAsync(CancellationToken.None);
-                                         });
+            _runningTasks[pipeline.Id] = pipeline.RunAsync(CancellationToken.None);
+            await _runningTasks[pipeline.Id];
         }
     }
 }
