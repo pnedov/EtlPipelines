@@ -45,14 +45,12 @@ public class CustomersRepository : ICustomersRepository
     /// <returns>The number of state entries written to the database.</returns>
     public async Task<int> UpsertCustomerAsync(Customers customer, CancellationToken cancellationToken)
     {
-        Customers? existingCustomer = await _context.Customers.FirstOrDefaultAsync(c => c.UniqueId == customer.UniqueId, cancellationToken);
         var commandText = "";
         var parameters = new List<SqlParameter>();
         var outputParameter = new SqlParameter();
 
-        if (existingCustomer != null)
+        if (customer != null && customer.UniqueId != Guid.Empty)
         {
-            // Execute stored procedure to update customer
             commandText = "EXEC sp_updatecustomer @unique_id, @fname, @lname, @updated_id OUTPUT";
             parameters.AddRange(new[]
             {
@@ -62,28 +60,20 @@ public class CustomersRepository : ICustomersRepository
             });
             outputParameter = new SqlParameter("@updated_id", SqlDbType.Int) { Direction = ParameterDirection.Output };
             parameters.Add(outputParameter);
-        }
-        else
-        {
-            existingCustomer = await _context.Customers.FirstOrDefaultAsync(c => c.CustomerEmail == customer.CustomerEmail, cancellationToken);
-            if (existingCustomer != null)
-            {
-                return existingCustomer.Id;
-            }
+            await _context.Database.ExecuteSqlRawAsync(commandText, parameters.ToArray(), cancellationToken);
 
-            // Execute stored procedure to add new customer
-            commandText = "EXEC sp_addnewcustomer @unique_id, @fname, @lname, @cust_email, @new_id OUTPUT";
-            parameters.AddRange(new[]
+            if (outputParameter.Value == DBNull.Value)
             {
-                new SqlParameter("@unique_id", customer.UniqueId),
-                new SqlParameter("@fname", customer.FirstName),
-                new SqlParameter("@lname", customer.LastName),
-                new SqlParameter("@cust_email", SqlDbType.NVarChar, 64) { Value = customer.CustomerEmail, Direction = ParameterDirection.Input }
-            });
-            outputParameter = new SqlParameter("@new_id", SqlDbType.Int) { Direction = ParameterDirection.Output };
-            parameters.Add(outputParameter);
+                commandText = "EXEC sp_addnewcustomer @unique_id, @fname, @lname, @cust_email, @new_id OUTPUT";
+                parameters.AddRange(new[]
+                {
+                    new SqlParameter("@cust_email", SqlDbType.NVarChar, 64) { Value = customer.CustomerEmail, Direction = ParameterDirection.Input }
+                });
+                outputParameter = new SqlParameter("@new_id", SqlDbType.Int) { Direction = ParameterDirection.Output };
+                parameters.Add(outputParameter);
+                await _context.Database.ExecuteSqlRawAsync(commandText, parameters.ToArray(), cancellationToken);
+            }
         }
-        await _context.Database.ExecuteSqlRawAsync(commandText, parameters.ToArray(), cancellationToken);
 
         return (int)outputParameter.Value;
     }
@@ -96,14 +86,12 @@ public class CustomersRepository : ICustomersRepository
     /// <returns>The number of state entries written to the database.</returns>
     public async Task<int> UpsertTransctionAsync(CustomerTransactions transaction, CancellationToken cancellationToken)
     {
-        CustomerTransactions? existingTransaction = await _context.CustomerTransactions.FirstOrDefaultAsync(t => t.UniqueId == transaction.UniqueId, cancellationToken);
         var commandText = "";
         var parameters = new List<SqlParameter>();
         var outputParameter = new SqlParameter();
 
-        if (existingTransaction != null && existingTransaction.Id > 0)
+        if (transaction != null && transaction.UniqueId != Guid.Empty)
         {
-            // Execute stored procedure to update transaction
            commandText = @"EXEC sp_updatetransaction @unique_id, @unitprice, @quantity, 
                                               @discount, @total_price, @timestamp,
                                               @location, @customers_id, @products_id,
@@ -124,35 +112,20 @@ public class CustomersRepository : ICustomersRepository
             });
             outputParameter = new SqlParameter("@updated_id", SqlDbType.Int) { Direction = ParameterDirection.Output };
             parameters.Add(outputParameter);
-        }
-        else
-        {
-            if (transaction != null)
+            await _context.Database.ExecuteSqlRawAsync(commandText, parameters.ToArray(), cancellationToken);
+
+            if (outputParameter.Value == DBNull.Value)
             {
-               // Execute stored procedure to add new transaction
-               commandText = @"sp_addnewtransaction @unique_id, @unitprice, @quantity,
+                commandText = @"sp_addnewtransaction @unique_id, @unitprice, @quantity,
                                                     @timestamp, @discount, @total_price,
                                                     @location, @products_id, @customers_id,
                                                     @payment_methods_id, @transction_statuses_id, @new_id OUTPUT";
-               parameters.AddRange(new[]
-               {
-                    new SqlParameter("@unique_id", transaction.UniqueId),
-                    new SqlParameter("@unitprice", transaction.UnitPrice),
-                    new SqlParameter("@quantity", transaction.Quantity),
-                    new SqlParameter("@discount", transaction.Discount),
-                    new SqlParameter("@total_price", transaction.TotalPrice),
-                    new SqlParameter("@timestamp", transaction.Timestamp),
-                    new SqlParameter("@location", transaction.Location),
-                    new SqlParameter("@customers_id", transaction.CustomerId),
-                    new SqlParameter("@products_id", transaction.ProductsId),
-                    new SqlParameter("@payment_methods_id", transaction.PaymentMethodsId),
-                    new SqlParameter("@transction_statuses_id", transaction.TransctionStatusesId),
-                });
+
                 outputParameter = new SqlParameter("@new_id", SqlDbType.Int) { Direction = ParameterDirection.Output };
                 parameters.Add(outputParameter);
+                await _context.Database.ExecuteSqlRawAsync(commandText, parameters.ToArray(), cancellationToken);
             }
         }
-        await _context.Database.ExecuteSqlRawAsync(commandText, parameters.ToArray(), cancellationToken);
 
         return (int)outputParameter.Value;
     }

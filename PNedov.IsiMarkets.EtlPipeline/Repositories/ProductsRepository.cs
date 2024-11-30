@@ -35,12 +35,11 @@ public class ProductsRepository : IProductsRepository
 
     public async Task<int> UpsertProductAsync(Products product, CancellationToken cancellationToken)
     {
-        var existingProduct = await _context.Products.FirstOrDefaultAsync(t => t.UniqueId == product.UniqueId, cancellationToken);
         var commandText = "";
         var parameters = new List<SqlParameter>();
         var outputParameter = new SqlParameter();
 
-        if (existingProduct != null)
+        if (product != null && product.UniqueId != Guid.Empty)
         {
             commandText = "EXEC sp_updateproduct @unique_id, @iname, @idesc, @updated_id OUTPUT";
             parameters.AddRange(new[]
@@ -51,21 +50,16 @@ public class ProductsRepository : IProductsRepository
             });
             outputParameter = new SqlParameter("@updated_id", SqlDbType.Int) { Direction = ParameterDirection.Output };
             parameters.Add(outputParameter);
-        }
-        else
-        {
-            commandText = "EXEC sp_addnewproduct @unique_id, @iname, @idesc, @new_id OUTPUT";
-            parameters.AddRange(new[]
-            {
-                    new SqlParameter("@unique_id", product.UniqueId),
-                    new SqlParameter("@iname", product.Name),
-                    new SqlParameter("@idesc", product.Description)
-            });
-            outputParameter = new SqlParameter("@new_id", SqlDbType.Int) { Direction = ParameterDirection.Output };
-            parameters.Add(outputParameter);
-        }
+            await _context.Database.ExecuteSqlRawAsync(commandText, parameters.ToArray(), cancellationToken);
 
-        await _context.Database.ExecuteSqlRawAsync(commandText, parameters.ToArray(), cancellationToken);
+            if (outputParameter.Value == DBNull.Value)
+            {
+                commandText = "EXEC sp_addnewproduct @unique_id, @iname, @idesc, @new_id OUTPUT";
+                outputParameter = new SqlParameter("@new_id", SqlDbType.Int) { Direction = ParameterDirection.Output };
+                parameters.Add(outputParameter);
+                await _context.Database.ExecuteSqlRawAsync(commandText, parameters.ToArray(), cancellationToken);
+            }
+        }
 
         return (int)outputParameter.Value;
     }
