@@ -17,7 +17,14 @@ public class CustomersRepository : ICustomersRepository
         _context = context;
     }
 
-    public async Task<IEnumerable<Customers>> GetCustomersAsync(int skip, int take, CancellationToken token)
+    /// <summary>
+    /// Retrieves a paginated list of customers from the database.
+    /// </summary>
+    /// <param name="skip">The number of customers to skip.</param>
+    /// <param name="take">The number of customers to take.</param>
+    /// <param name="cancellationToken">Cancellation token to cancel the operation.</param>
+    /// <returns>The task result contains an enumerable collection of customers.</returns>
+    public async Task<IEnumerable<Customers>> GetCustomersAsync(int skip, int take, CancellationToken cancellationToken)
     {
         var commandText = "EXEC sp_getcustomers @skip, @take";
         var parameters = new[]
@@ -28,11 +35,18 @@ public class CustomersRepository : ICustomersRepository
 
         return await _context.Customers
                        .FromSqlRaw(commandText, parameters)
-                       .ToListAsync(token);
+                       .ToListAsync(cancellationToken);
     }
 
-
-    public async Task<IEnumerable<CustomerTransactions>> GetCustomerTransactionsAsync(Guid customerId, int skip, int take, CancellationToken token)
+    /// <summary>
+    /// Retrieves a paginated list of transactions for a specific customer.
+    /// </summary>
+    /// <param name="customerId">The unique identifier of the customer.</param>
+    /// <param name="skip">The number of transactions to skip.</param>
+    /// <param name="take">The number of transactions to take.</param>
+    /// <param name="cancellationToken">Cancellation token to cancel the operation.</param>
+    /// <returns>The task result contains an enumerable collection of customer transactions.</returns>
+    public async Task<IEnumerable<CustomerTransactions>> GetCustomerTransactionsAsync(Guid customerId, int skip, int take, CancellationToken cancellationToken)
     {
         var commandText = "EXEC sp_getcustomertransactions @customerId, @skip, @take";
         var parameters = new[]
@@ -44,7 +58,7 @@ public class CustomersRepository : ICustomersRepository
 
         return await _context.CustomerTransactions
                        .FromSqlRaw(commandText, parameters)
-                       .ToListAsync(token);
+                       .ToListAsync(cancellationToken);
     }
 
     /// <summary>

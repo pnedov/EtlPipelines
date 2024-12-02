@@ -45,7 +45,12 @@ public class CsvExtractor : IExtractor
             using (var reader = new StreamReader(filePath))
             using (var csv = new CsvReader(reader, config))
             {
-                records = csv.GetRecords<RawDataRecord>().ToList();
+                while (await csv.ReadAsync())
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    var record = csv.GetRecord<RawDataRecord>();
+                    records.Add(record);
+                }
             }
 
             if (File.Exists(backupFilePath))
