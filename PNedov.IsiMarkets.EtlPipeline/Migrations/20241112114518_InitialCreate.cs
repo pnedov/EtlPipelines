@@ -293,6 +293,58 @@ namespace PNedov.IsiMarkets.EtlPipeline.Migrations
                     ('Pending')
                 END;
                 GO
+
+                CREATE PROCEDURE sp_getproducts
+                    @skip INT,
+                    @take INT
+                AS
+                BEGIN
+                    SET NOCOUNT ON;
+
+                    SELECT 
+                        unique_id,
+                        iname,
+                        idesc
+                    FROM 
+                        products
+                    ORDER BY 
+                        unique_id
+                    OFFSET @skip ROWS
+                    FETCH NEXT @take ROWS ONLY;
+                END;
+                GO
+
+                CREATE PROCEDURE sp_getcustomers
+                    @skip INT,
+                    @take INT
+                AS
+                BEGIN
+                    SET NOCOUNT ON;
+
+                    SELECT *
+                    FROM customers
+                    ORDER BY lname, fname
+                    OFFSET @skip ROWS
+                    FETCH NEXT @take ROWS ONLY;
+                END
+                GO
+
+                CREATE PROCEDURE sp_getcustomertransactions
+                    @customerId UNIQUEIDENTIFIER,
+                    @skip INT,
+                    @take INT
+                AS
+                BEGIN
+                    SET NOCOUNT ON;
+
+                    SELECT *
+                    FROM customers_transactions
+                    WHERE unique_id = @customerId
+                    ORDER BY timestamp
+                    OFFSET @skip ROWS
+                    FETCH NEXT @take ROWS ONLY;
+                END
+                GO
              ");
         }
 

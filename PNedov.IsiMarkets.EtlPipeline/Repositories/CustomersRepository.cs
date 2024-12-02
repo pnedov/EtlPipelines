@@ -19,21 +19,31 @@ public class CustomersRepository : ICustomersRepository
 
     public async Task<IEnumerable<Customers>> GetCustomersAsync(int skip, int take, CancellationToken token)
     {
+        var commandText = "EXEC sp_getcustomers @skip, @take";
+        var parameters = new[]
+        {
+            new SqlParameter("@skip", skip),
+            new SqlParameter("@take", take)
+        };
+
         return await _context.Customers
-                       .OrderBy(c => c.LastName)
-                       .ThenBy(c => c.FirstName)
-                       .Skip(skip)
-                       .Take(take)
+                       .FromSqlRaw(commandText, parameters)
                        .ToListAsync(token);
     }
 
+
     public async Task<IEnumerable<CustomerTransactions>> GetCustomerTransactionsAsync(Guid customerId, int skip, int take, CancellationToken token)
     {
+        var commandText = "EXEC sp_getcustomertransactions @customerId, @skip, @take";
+        var parameters = new[]
+        {
+        new SqlParameter("@customerId", customerId),
+        new SqlParameter("@skip", skip),
+        new SqlParameter("@take", take)
+    };
+
         return await _context.CustomerTransactions
-                       .Where(t => t.UniqueId == customerId)
-                       .OrderBy(t => t.Timestamp)
-                       .Skip(skip)
-                       .Take(take)
+                       .FromSqlRaw(commandText, parameters)
                        .ToListAsync(token);
     }
 

@@ -17,13 +17,48 @@ public class ProductsRepository : IProductsRepository
         _context = context;
     }
 
+    /// <summary>
+    /// Retrieves a list of products from the database asynchronously.
+    /// </summary>
+    /// <param name="skip">The number of products to skip.</param>
+    /// <param name="take">The number of products to retrieve.</param>
+    /// <param name="token">Token to monitor for cancellation requests.</param>
+    /// <returns>Asynchronus task result contains an IEnumerable of Products.</returns>
     public async Task<IEnumerable<Products>> GetProductsAsync(int skip, int take, CancellationToken token)
     {
-        return await _context.Products
-                       .OrderBy(p => p.Name)
-                       .Skip(skip)
-                       .Take(take)
-                       .ToListAsync(token);
+        var products = new List<Products>();
+        var commandText = "EXEC sp_getproducts @skip, @take";
+        var parameters = new[]
+        {
+            new SqlParameter("@skip", skip),
+            new SqlParameter("@take", take)
+        };
+
+        using (var command = _context.Database.GetDbConnection().CreateCommand())
+        {
+            command.CommandText = commandText;
+            command.Parameters.AddRange(parameters);
+
+            await _context.Database.OpenConnectionAsync(token);
+
+            using (var reader = await command.ExecuteReaderAsync(token))
+            {
+                while (await reader.ReadAsync(token))
+                {
+                    var product = new Products
+                    {
+                        UniqueId = reader.IsDBNull(0) ? Guid.Empty : reader.GetGuid(reader.GetOrdinal("unique_id")),
+                        Name = reader.IsDBNull(reader.GetOrdinal("iname")) ? string.Empty : reader.GetString(reader.GetOrdinal("iname")),
+                        Description = reader.IsDBNull(reader.GetOrdinal("idesc")) ? string.Empty : reader.GetString(reader.GetOrdinal("idesc"))
+                    };
+                    products.Add(product);
+                }
+            }
+
+            await _context.Database.CloseConnectionAsync();
+        }
+
+        return products;
     }
 
     /// <summary>
@@ -32,7 +67,6 @@ public class ProductsRepository : IProductsRepository
     /// <param name="product">The product to upsert.</param>
     /// <param name="cancellationToken">Token to monitor for cancellation requests.</param>
     /// <returns>The ID product.</returns>
-
     public async Task<int> UpsertProductAsync(Products product, CancellationToken cancellationToken)
     {
         var commandText = "";
