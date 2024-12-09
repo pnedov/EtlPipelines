@@ -28,7 +28,7 @@ public class SystemRepository(TransactionsDbContext _context) : ISystemRepositor
     public async Task InitializeDatabase(CancellationToken cancellationToken)
     {
         _context.Database.EnsureCreated();
-        if (!IsTableExistsAsync(cancellationToken))
+        if (!await IsTableExistsAsync(cancellationToken))
         {
             await CreateTables(cancellationToken);
         }
@@ -39,7 +39,7 @@ public class SystemRepository(TransactionsDbContext _context) : ISystemRepositor
         };
 
         _context.SystemConfigurations.Add(defaultConfig);
-        _context.SaveChanges();
+        await _context.SaveChangesAsync(cancellationToken);
     }
 
     /// <summary>
@@ -59,31 +59,31 @@ public class SystemRepository(TransactionsDbContext _context) : ISystemRepositor
         {
             _context.SystemConfigurations.Add(newConfig);
         }
-
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(cancellationToken);
     }
 
-    private bool IsTableExistsAsync(CancellationToken cancellationToken)
+    private Task<bool> IsTableExistsAsync(CancellationToken cancellationToken)
     {
         var query = "SELECT COUNT(object_id) as count FROM [sys].[objects] WHERE [name] = @table_name";
-        using (var connection = new SqlConnection(_context.Database.GetDbConnection().ConnectionString))
+        return Task.Run(async () =>
         {
-            using (var command = new SqlCommand(query, connection))
+            using (var connection = new SqlConnection(_context.Database.GetDbConnection().ConnectionString))
             {
-                command.Parameters.AddWithValue("@table_name", DbTableName);
-                connection.Open();
-                var count = (int)command.ExecuteScalar();
-                connection.Close();
-
-                return count > 0;
+                await connection.OpenAsync(cancellationToken);
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@table_name", DbTableName);
+                    var count = (int)await command.ExecuteScalarAsync(cancellationToken);
+                    return count > 0;
+                }
             }
-        }
+        }, cancellationToken);
     }
 
-    private async Task CreateTables(CancellationToken token)
+    private async Task CreateTables(CancellationToken cancellationToken)
     {
         var dbCreator = _context.GetService<IRelationalDatabaseCreator>();
-        await dbCreator.CreateTablesAsync(token);
+        await dbCreator.CreateTablesAsync(cancellationToken);
     }
 }
 

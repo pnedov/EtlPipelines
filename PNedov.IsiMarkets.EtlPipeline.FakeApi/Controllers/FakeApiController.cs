@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.FileProviders;
 using Newtonsoft.Json.Linq;
 using PNedov.IsiMarkets.EtlPipeline.FakeApi.Models;
 
@@ -29,7 +28,7 @@ public class FakeApiController : ControllerBase
     /// <param name="cancellationToken"></param>
     /// <returns>A list of customer transactions.</returns>
     [HttpGet("customertransactions")]
-    public async Task<IActionResult> GetCustomerTransactionsAsync(CancellationToken cancellationToken)
+    public async Task<IActionResult> GetCustomerTransactionsAsync(CancellationToken cancellationToken, int page, int size)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
@@ -47,7 +46,7 @@ public class FakeApiController : ControllerBase
                 return Ok(newRawDataRecords);
             }
 
-            newRawDataRecords = json.Select(data => new RawDataRecord
+            newRawDataRecords = json.Skip((page - 1) * size).Take(size).Select(data => new RawDataRecord
             {
                 CustomerTransactionId = (string)data["CustomerTransactionId"],
                 CustomerId = (string)data["CustomerId"],
